@@ -5,234 +5,151 @@ import os
 
 # Page configuration
 st.set_page_config(
-    page_title="Leave a Birthday Message 🎂",
-    page_icon="💌",
+    page_title="Birthday Celebration Portal",
+    page_icon="🎂",
     layout="centered"
 )
 
-# File path for storing messages
-MESSAGES_FILE = "birthday_messages.json"
+# File to store correct answers (you'll need to set these)
+CONFIG_FILE = "birthday_config.json"
 
-
-# Function to load messages from file
-def load_messages():
-    if os.path.exists(MESSAGES_FILE):
+# Function to load configuration
+def load_config():
+    if os.path.exists(CONFIG_FILE):
         try:
-            with open(MESSAGES_FILE, 'r', encoding='utf-8') as f:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
-            return []
-    return []
+            return {"name": "", "birthday": ""}
+    return {"name": "", "birthday": ""}
 
-
-# Function to save messages to file
-def save_messages(messages):
+# Function to save configuration
+def save_config(config):
     try:
-        with open(MESSAGES_FILE, 'w', encoding='utf-8') as f:
-            json.dump(messages, f, indent=2, ensure_ascii=False)
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        st.error(f"Error saving messages: {e}")
+        st.error(f"Error saving configuration: {e}")
 
+# Load current config
+config = load_config()
 
-# Initialize messages
-if 'messages' not in st.session_state:
-    st.session_state.messages = load_messages()
-
-# Header section
-st.title("💌 Leave a Birthday Message")
+# Main header
+st.title("🎂 Birthday Celebration Portal")
 st.markdown("---")
 
-# Introduction section
+# Welcome section
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("""
     <div style="text-align: center;">
-        <h3>🎂 Help us celebrate a special birthday! 🎂</h3>
+        <h3>🌟 Welcome to the Birthday Celebration! 🌟</h3>
         <p style="font-size: 16px;">
-            Leave a heartfelt message that will make this birthday extra special.
-            Your message will be saved and displayed as part of the birthday celebration.
+            We're celebrating someone very special today! To access your personalized 
+            birthday experience, please share a few details about yourself.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("---")
 
-# Message submission form
-st.subheader("📝 Your Birthday Message")
-
-with st.form("birthday_message_form", clear_on_submit=True):
-    col1, col2 = st.columns(2)
-
-    with col1:
-        sender_name = st.text_input(
-            "Your Name *",
-            placeholder="Enter your name",
-            help="This will appear as your signature"
-        )
-
-    with col2:
-        relationship = st.selectbox(
-            "Your Relationship (Optional)",
-            [
-                "",
-                # Immediate Family
-                "Son", "Daughter", "Husband", "Partner",
-                # Children & Grandchildren
-                "Grandson", "Granddaughter", "Great-Grandson", "Great-Granddaughter",
-                # Parents & Grandparents
-                "Mother", "Father", "Grandmother", "Grandfather",
-                # Siblings
-                "Sister", "Brother", "Twin Sister", "Twin Brother",
-                # Extended Family - Aunts/Uncles
-                "Aunt", "Uncle", "Great-Aunt", "Great-Uncle",
-                # Extended Family - Cousins
-                "Cousin", "First Cousin", "Second Cousin",
-                # In-Laws
-                "Mother-in-Law", "Father-in-Law", "Sister-in-Law", "Brother-in-Law",
-                "Daughter-in-Law", "Son-in-Law",
-                # Nieces/Nephews
-                "Niece", "Nephew", "Great-Niece", "Great-Nephew",
-                # Step Family
-                "Stepmother", "Stepfather", "Stepdaughter", "Stepson",
-                "Stepsister", "Stepbrother",
-                # Godparents/Godchildren
-                "Godmother", "Godfather", "Goddaughter", "Godson",
-                # Friends & Others
-                "Best Friend", "Close Friend", "Friend", "Family Friend",
-                "Neighbor", "Colleague", "Coworker", "Boss",
-                "Former Colleague", "Childhood Friend", "School Friend",
-                # Community
-                "Church Friend", "Club Member", "Volunteer Friend",
-                "Other"
-            ],
-            help="Optional: Let them know how you know them"
-        )
-
-    message = st.text_area(
-        "Birthday Message *",
-        placeholder="Write your heartfelt birthday message here...",
-        height=120,
-        help="Share your birthday wishes, memories, or what makes them special"
-    )
-
-    # Message guidelines
-    st.markdown("""
-    **Message Tips:**
-    - Share a favorite memory
-    - Express what they mean to you
-    - Include birthday wishes for the year ahead
-    - Keep it heartfelt and personal
-    """)
-
-    submitted = st.form_submit_button("🎁 Send Birthday Message", use_container_width=True)
-
-    # Form validation and submission
-    if submitted:
-        if not sender_name.strip():
-            st.error("Please enter your name")
-        elif not message.strip():
-            st.error("Please write a birthday message")
-        elif len(message.strip()) < 10:
-            st.error("Please write a longer message (at least 10 characters)")
-        else:
-            # Create message entry
-            new_message = {
-                'name': sender_name.strip(),
-                'relationship': relationship if relationship else None,
-                'message': message.strip(),
-                'timestamp': datetime.now().strftime("%B %d, %Y at %I:%M %p")
-            }
-
-            # Add to session state and save to file
-            st.session_state.messages.append(new_message)
-            save_messages(st.session_state.messages)
-
-            # Success message
-            st.success(f"Thank you {sender_name}! Your birthday message has been saved! 🎉")
-            st.balloons()
-
-            # Show confirmation
-            st.markdown("---")
-            st.subheader("✅ Message Sent Successfully!")
-            st.markdown(f"**Your message:** {message}")
-            st.markdown(f"**From:** {sender_name}" + (f" ({relationship})" if relationship else ""))
-            st.markdown(f"**Sent:** {new_message['timestamp']}")
-
-st.markdown("---")
-
-# Recent messages preview (last 3)
-recent_messages = st.session_state.messages[-3:] if st.session_state.messages else []
-if recent_messages:
-    st.subheader("💕 Recent Messages")
-    st.markdown("*Here are some of the recent birthday messages:*")
-
-    for msg in reversed(recent_messages):
-        with st.container():
-            st.markdown(f"""
-            <div style="
-                background-color: #f9f9f9;
-                padding: 15px;
-                border-radius: 8px;
-                border-left: 3px solid #ff69b4;
-                margin: 10px 0;
-            ">
-                <div style="font-weight: bold; color: #333;">
-                    💌 {msg['message'][:100]}{'...' if len(msg['message']) > 100 else ''}
-                </div>
-                <div style="font-style: italic; color: #666; margin-top: 5px;">
-                    — {msg['name']}{f" ({msg['relationship']})" if msg.get('relationship') else ""}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-# Message count
-if st.session_state.messages:
+# Setup section (only show if not configured)
+if not config.get("name") or not config.get("birthday"):
+    st.subheader("🎈 Celebration Setup")
+    st.info("First time setup: Enter the birthday person's details to configure the celebration.")
+    
+    with st.form("setup_form"):
+        setup_name = st.text_input("Birthday Person's Full Name", placeholder="Enter the name")
+        setup_birthday = st.date_input("Birthday Date", value=datetime(1950, 1, 1))
+        
+        if st.form_submit_button("Start Celebration"):
+            if setup_name.strip():
+                new_config = {
+                    "name": setup_name.strip(),
+                    "birthday": setup_birthday.strftime("%Y-%m-%d")
+                }
+                save_config(new_config)
+                st.success("Celebration setup complete!")
+                st.rerun()
+            else:
+                st.error("Please enter a name")
+    
     st.markdown("---")
-    col1, col2, col3 = st.columns(3)
-    with col2:
-        st.metric("Total Messages Sent", len(st.session_state.messages))
 
-# Footer section
+# Main portal section
+if config.get("name") and config.get("birthday"):
+    st.subheader("🎉 Join the Celebration")
+    st.markdown("Tell us about yourself to access your personalized birthday experience:")
+    
+    with st.form("celebration_form"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            user_name = st.text_input("Your Full Name", placeholder="What should we call you?")
+        
+        with col2:
+            user_birthday = st.date_input("Your Special Day", value=datetime(1950, 1, 1), help="When do you celebrate your birthday?")
+        
+        st.markdown("*We use this information to personalize your birthday experience and ensure you're in the right place.*")
+        
+        if st.form_submit_button("Enter Celebration", use_container_width=True):
+            # Check if answers match
+            correct_name = config["name"].lower().strip()
+            correct_birthday = config["birthday"]
+            
+            entered_name = user_name.lower().strip()
+            entered_birthday = user_birthday.strftime("%Y-%m-%d")
+            
+            if entered_name == correct_name and entered_birthday == correct_birthday:
+                # Store verification in session state
+                st.session_state.verified = True
+                st.session_state.verified_name = user_name.strip()
+                st.success("Welcome to your special celebration!")
+                
+                # Show celebration access
+                st.markdown("---")
+                st.subheader("🎊 Your Birthday Celebration Awaits!")
+                st.markdown(f"Happy Birthday, {user_name}!")
+                st.markdown("Your personalized birthday messages are ready for you:")
+                
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    st.markdown("""
+                    <div style="text-align: center; padding: 20px; background-color: #f0f8ff; border-radius: 10px; border: 2px solid #ff69b4;">
+                        <h4>🎁 Your Birthday Messages</h4>
+                        <p>Click below to see all the wonderful messages people have left for you!</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown("[**🎁 View Your Birthday Messages**](http://localhost:5002)")
+                
+            else:
+                st.warning("Hmm, we can't find your celebration. Please double-check your information or contact the celebration organizer.")
+                if 'verified' in st.session_state:
+                    del st.session_state.verified
+
+# Admin section to reset configuration (hidden)
+if config.get("name"):
+    with st.expander("🎂 Celebration Settings"):
+        st.info("Reset celebration settings if needed.")
+        if st.button("Reset Celebration"):
+            save_config({"name": "", "birthday": ""})
+            if 'verified' in st.session_state:
+                del st.session_state.verified
+            st.success("Celebration reset!")
+            st.rerun()
+
+# Footer
 st.markdown("---")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("""
     <div style="text-align: center;">
         <p style="color: #666; font-style: italic;">
-            🎂 Help make this birthday celebration extra special! 🎂
+            🎂 Making birthdays more special, one celebration at a time
         </p>
         <p style="font-size: 12px; color: #999;">
-            All messages are saved permanently and will be displayed
+            Secure celebration portal
         </p>
     </div>
     """, unsafe_allow_html=True)
-
-# Sidebar with message tips
-with st.sidebar:
-    st.markdown("### 💡 Message Ideas")
-    st.markdown("""
-    **What to include:**
-    - 🎂 Birthday wishes
-    - 💕 What they mean to you
-    - 📸 Favorite memories
-    - 🌟 Hopes for their new year
-    - 😊 Something that makes you smile about them
-    """)
-
-    st.markdown("---")
-    st.markdown("### 📊 Message Stats")
-    if st.session_state.messages:
-        st.metric("Messages Today", len(st.session_state.messages))
-
-        # Show relationship breakdown
-        relationships = [msg.get('relationship') for msg in st.session_state.messages if msg.get('relationship')]
-        if relationships:
-            st.markdown("**Relationships:**")
-            rel_counts = {}
-            for rel in relationships:
-                rel_counts[rel] = rel_counts.get(rel, 0) + 1
-
-            for rel, count in sorted(rel_counts.items()):
-                st.markdown(f"- {rel}: {count}")
-    else:
-        st.info("No messages yet - be the first!")
